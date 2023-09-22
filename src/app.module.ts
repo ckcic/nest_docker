@@ -1,11 +1,14 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import emailConfig from './config/emailConfig';
 import { validationSchema } from './config/validationSchema';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerMiddleware } from './logger/logger.middleware';
+import { Logger2Middleware } from './logger/logger2.middleware';
+import { UsersController } from './users/users.controller';
 
-@Module({ 
+@Module({  
   imports: [UsersModule,
     ConfigModule.forRoot({
     envFilePath: [`${__dirname}/config/env/.${process.env.NODE_ENV}.env`],  // NODE_ENV값에 따라 다른 env파일 사용
@@ -22,7 +25,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: process.env.MYSQL_DATABASE, // 연결하고자 하는 데이터베이스 스키마 이름
       entities: [__dirname + '/**/*.entity{.ts,.js}'],  // 소스 코드 내에서 TypeOrm이 구동될 때 인식하도록 할 엔티티, 클래스의 경로를 지정
       synchronize: false,  // 옵션은 서비스 구동 시 소스 코드 기반으로 데이터베이스 스키마를 동기화할지 여부, true로 할 시 연결할 때 초기화
-      migrationsRun: false, //서버가 구동될 때 작성된 마이그레이션 파일을 기반으로 마이그레이션을 수행하게 할지 설정하는 옵션, false로 설정하여 CLI 명령어를 직접 입력하게 설정
+      migrationsRun: true, //서버가 구동될 때 작성된 마이그레이션 파일을 기반으로 마이그레이션을 수행하게 할지 설정하는 옵션, false로 설정하여 CLI 명령어를 직접 입력하게 설정
       migrations: [__dirname + '/**/migrations/*.js'],  // 마이그레이션을 수행할 파일이 관리되는 경로를 설정
       migrationsTableName: 'migrations',  // 마이그레이션 이력이 기록되는 테이블 이름, 생략할 경우 기본값은 migrations
     }),
@@ -30,4 +33,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): any {
+    consumer
+    .apply(LoggerMiddleware, Logger2Middleware)
+    // .exclude({path: '/users', method: RequestMethod.GET}) // /users 경로로 전달된 GET 요청일 때는 LoggerMiddleware, Logger2Middleware가 무시됨
+    // .forRoutes('/users')
+    .forRoutes(UsersController)
+  }
+}

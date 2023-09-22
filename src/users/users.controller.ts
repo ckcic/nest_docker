@@ -47,7 +47,7 @@ export class UsersController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Res() res: Response
   ) {
-    console.log(offset, limit);
+    // console.log(offset, limit);
     const users = this.usersService.findAll();
 
     return res.status(200).send(users);
