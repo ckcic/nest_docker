@@ -1,5 +1,5 @@
 import * as uuid from 'uuid';
-import { Injectable, InternalServerErrorException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateUserDto, UpdateUserDto, UserLoginDto, VerifyEmailDto } from './dto';
 import { EmailService } from 'src/email/email.service';
 import { UserInfo } from './UserInfo';
@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { ulid } from 'ulid';
+import { AuthService } from 'src/auth/auth.service';
+import { async } from 'rxjs';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +16,7 @@ export class UsersService {
     private readonly emailService: EmailService, 
     @InjectRepository(UserEntity) private usersRepository: Repository<UserEntity>,  // UsersService에 @InjectRepository 데커레이터로 유저 저장소를 주입
     private dataSource: DataSource, // typeorm에서 제공하는 DataSource 객체를 주입
+    private readonly authService: AuthService,
     ) {}
 
   async createUser(dto:CreateUserDto) {
@@ -34,8 +37,8 @@ export class UsersService {
     const user = await this.usersRepository.findOne({
       where: {email}
     });
-
-    return user !== undefined;
+    console.log("user", user);
+    return user !== null;
   }
 
   private async saveUser(name: string, email:string, password: string, signupVerifyToken: string) {
@@ -103,8 +106,19 @@ export class UsersService {
     // 1. DB에서 signupVerifyToken으로 회원 가입 처리중인 유저가 있는지 조회하고 없다면 에러 처리
     // 2. 바로 로그인 상태가 되도록 JWT를 발급
     const { signupVerifyToken } = dto;
+    const user = await this.usersRepository.findOne({ // signupVerifyToken으로 회원 가입 중인 유저를 찾습니다.
+      where: { signupVerifyToken }
+    });
 
-    throw new Error('Method not implemented.');
+    if(!user) { // 만약 DB에 저장되어 있지 않다면 에러를 던집니다.
+      throw new NotFoundException('유저가 존재하지 않습니다');
+    }
+
+    return this.authService.login({ // AuthService에 로그인 처리를 요청합니다.
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    });
   }
 
   async login(dto:UserLoginDto): Promise<string> {
@@ -112,14 +126,37 @@ export class UsersService {
     // 2. JWT를 발급
     const { email, password } = dto;
 
-    throw new Error('Method not implemented.');
+    const user = await this.usersRepository.findOne({
+      where: {email, password}
+    });
+
+    if (!user) {
+      throw new NotFoundException('유저가 존재하지 않습니다');
+    }
+
+    return this.authService.login({ 
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    });
   }
 
   async getUserInfo(userId:string): Promise<UserInfo> {
     // 1. userId를 가진 유저가 존재하는지 DB에서 확인하고 없다면 에러 처리
     // 2. 조회된 데이터를 UserInfo 타입으로 응답
+    const user = await this.usersRepository.findOne({
+      where: {id: userId}
+    });
+
+    if(!user) {
+      throw new NotFoundException('유저가 존재하지 않습니다');
+    }
     
-    throw new Error('Method not implemented.');
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    };
   }
 
   findAll() {
