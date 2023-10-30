@@ -18,6 +18,10 @@ import { HttpExceptionFilter } from './exception/http-exception.filter';
 import { ExceptionModule } from './exception/exception.module';
 import { LoggingModule } from './interceptor/logging.module';
 import { BatchModule } from './batch/batch.module';
+import { HttpModule } from '@nestjs/axios';
+import { TerminusModule } from '@nestjs/terminus';
+import { HealthCheckController } from './health-check/health-check.controller';
+import { DogHealthIndicator } from './health-check/dog.health';
 
 @Module({  
   imports: [
@@ -63,14 +67,17 @@ import { BatchModule } from './batch/batch.module';
     //     }),
     //   ],
     // }),
+    TerminusModule,
+    HttpModule,
   ],
-  controllers: [AppController], 
+  controllers: [AppController,HealthCheckController], 
   providers: [AppService, 
     // Logger,
     // {
     //   provide: APP_FILTER,
     //   useClass: HttpExceptionFilter,
     // },
+    DogHealthIndicator,
   ],
 })
 export class AppModule implements NestModule {
