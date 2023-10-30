@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { Transform } from "class-transformer";
 import { IsEmail, IsString, Matches, MaxLength, MinLength } from "class-validator";
-import { NotIn } from "./not-in";
+import { NotIn } from "../../utils/decorators/not-in";
 
 export class CreateUserDto {
   @Transform(params => {
