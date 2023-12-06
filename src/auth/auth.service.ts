@@ -7,6 +7,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  permission: string;
 }
 
 @Injectable()
@@ -15,7 +16,7 @@ export class AuthService {
     @Inject(authConfig.KEY) private config: ConfigType<typeof authConfig>,
   ) {}
 
-  login(user: User) {
+  login(user: User) { 
     const payload = { ...user };
 
     return jwt.sign(payload, this.config.jwtSecret, {

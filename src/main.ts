@@ -9,9 +9,12 @@ import * as winston from 'winston';
 import { HttpExceptionFilter } from './exception/http-exception.filter';
 import { LoggingInterceptor } from './interceptor/logging.interceptor';
 import { TransformInterceptor } from './interceptor/transform.interceptor';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // logger: false,  // false로 할 시 로깅 비활성화
     // logger: process.env.NODE_ENV === 'production' 
     // ? ['error', 'warn', 'log']  // 프로덕션 환경에서는 debug 로그가 남지 않도록 하는게 좋다.
@@ -29,6 +32,17 @@ async function bootstrap() {
       ],
     })
   });
+
+  const uploadPath = 'uploads';
+  if (!existsSync(uploadPath)) {
+    mkdirSync(uploadPath);
+  }
+
+  app.useStaticAssets('/uploads');
+  app.useStaticAssets(join(__dirname, '../', 'uploads'), {
+    prefix: '/uploads'
+  });
+
   // app.useGlobalGuards(new AuthGuard()); // 전역가드 설정
   // app.useLogger(app.get(MyLogger));
   app.useGlobalPipes(new ValidationPipe({
@@ -41,6 +55,9 @@ async function bootstrap() {
   //   // new LoggingInterceptor(),
   //   // new TransformInterceptor(),
   // );
+
+  app.enableCors();
+
   await app.listen(5000);
 } 
 

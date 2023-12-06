@@ -1,7 +1,10 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { BaseEntity, Column, Entity, OneToMany, PrimaryColumn, Unique } from "typeorm";
+import { Post } from "../../post/entities/post.entity";
+import { Comment } from "../../comment/entities/comment.entity";
 
-@Entity('User')
-export class UserEntity {
+@Entity({name: 'user'})
+@Unique(['email'])
+export class UserEntity extends BaseEntity{
   @PrimaryColumn()
   id: string;
 
@@ -11,9 +14,18 @@ export class UserEntity {
   @Column({ length: 60 })
   email: string;
   
-  @Column({ length: 30 })
+  @Column({ length: 200 })
   password: string;
 
   @Column({ length: 60 })
   signupVerifyToken: string;
+
+  @Column({default: "user"})
+  permission: string;
+
+  @OneToMany(() => Post, (post) => post.user )
+  post: Post[];
+
+  @OneToMany(() => Comment, (comment) => comment.user )
+  comment: Comment[];
 }

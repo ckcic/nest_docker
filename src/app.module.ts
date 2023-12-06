@@ -22,6 +22,11 @@ import { HttpModule } from '@nestjs/axios';
 import { TerminusModule } from '@nestjs/terminus';
 import { HealthCheckController } from './health-check/health-check.controller';
 import { DogHealthIndicator } from './health-check/dog.health';
+import { BoardModule } from './board/board.module';
+import { PostModule } from './post/post.module';
+import { CommentModule } from './comment/comment.module';
+
+
 
 @Module({  
   imports: [
@@ -69,6 +74,9 @@ import { DogHealthIndicator } from './health-check/dog.health';
     // }),
     TerminusModule,
     HttpModule,
+    BoardModule,
+    PostModule,
+    CommentModule,
   ],
   controllers: [AppController,HealthCheckController], 
   providers: [AppService, 

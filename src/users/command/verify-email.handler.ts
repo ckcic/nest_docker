@@ -29,6 +29,7 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
       id: user.id,
       name: user.name,
       email: user.email,
+      permission: user.permission,
     });
   }
 }

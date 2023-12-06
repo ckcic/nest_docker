@@ -8,6 +8,7 @@ import * as uuid from 'uuid';
 import { ulid } from 'ulid';
 import { UserCreatedEvent } from "../event/user-created.event";
 import { TestEvent } from "../event/test.event";
+import * as bcrypt from 'bcrypt';
 
 
 @Injectable()
@@ -23,12 +24,19 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     const { name, email, password } = command;
 
     const userExist = await this.checkUserExists(email);
+    const nameExist = await this.checkNameExists(name);
 
     if (userExist) {
       throw new UnprocessableEntityException('해당 이메일로는 가입할 수 없습니다.');
     }
 
+    if (nameExist) {
+      throw new UnprocessableEntityException('이미 사용중인 닉네임입니다.');
+    }
+
     const signupVerifyToken = uuid.v1();
+
+
 
     await this.saveUserUsingTransaction(name, email, password, signupVerifyToken);
 
@@ -40,7 +48,12 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     const user = await this.usersRepository.findOne({
       where: {email}
     });
-    console.log("user", user);
+    // console.log("user", user);
+    return user !== null;
+  }
+
+  private async checkNameExists(name: string): Promise<boolean> {
+    const user = await this.usersRepository.findOneBy({name});
     return user !== null;
   }
 
@@ -77,11 +90,14 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
 
   private async saveUserUsingTransaction(name: string, email:string, password: string, signupVerifyToken: string) {
     await this.dataSource.transaction(async manager => {
+      const saltOrRounds = 10;
+      const hash = await bcrypt.hash(password, saltOrRounds);
+
       const user = new UserEntity();  // 새로운 유저 엔티티 객체를 생성
       user.id = ulid(); // npm i ulid, 랜덤한 스트링 생성
       user.name = name; 
       user.email = email;
-      user.password = password;
+      user.password = hash;
       user.signupVerifyToken = signupVerifyToken;
 
       await manager.save(user);

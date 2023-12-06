@@ -28,6 +28,6 @@ export class CreateUserDto {
   // })
   @Transform(params => params.value.trim())
   @IsString()
-  @Matches(/^[A-Za-z\d!@#$%^&*()]{8,30}$/) // 정규표현식 \d는 숫자를 대표하는 정규표현식 digit
+  @Matches(/^[A-Za-z\d!@#$%^&*()]{8,30}$/, {message: "패스워드는 영문 대소문자와 숫자 또는 특수문자(!, @, $, %, ^, &, *, (, ))로 이뤄잔 8자 이상 30자 이하의 문자열이어야 합니다."}) // 정규표현식 \d는 숫자를 대표하는 정규표현식 digit
   readonly password: string; // 사용자 패스워드는 영문 대소문자와 숫자 또는 특수문자(!, @, $, %, ^, &, *, (, ))로 이뤄잔 8자 이상 30자 이하의 문자열
 }

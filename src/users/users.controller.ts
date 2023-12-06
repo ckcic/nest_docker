@@ -27,7 +27,7 @@ export class UsersController {
   ) {}
 
   // @UseFilters(HttpExceptionFilter)  // 특정 엔드포인트 적용
-  @Post()
+  @Post("/register")
   async createUser(@Body() dto: CreateUserDto): Promise<void> {
     // this.printWinstonLog(dto);
     this.printLoggerServiceLog(dto);
